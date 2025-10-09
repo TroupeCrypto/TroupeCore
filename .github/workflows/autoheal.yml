@@ -1,1 +1,22 @@
-.github/workflows/autoheal.yml:4: workflows: ["Unified CI/CD"]
+name: Autoheal
+
+on:
+  workflow_run:
+    # This must match the target workflow's top-level `name:` exactly.
+    workflows:
+      - "Unified CI/CD"
+    types:
+      - completed
+
+jobs:
+  autoheal:
+    if: ${{ github.event.workflow_run.conclusion == 'failure' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Attempt auto-repair
+        run: |
+          echo "Auto-repair placeholder: replace with your repair steps."
+          # e.g. create a commit that bumps deps, open a PR, or call the GitHub API to re-run or notify maintainers
