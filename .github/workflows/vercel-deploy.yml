@@ -10,6 +10,18 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-      - run: npm ci
+      - name: Install dependencies
+        run: |
+          if [ -f package-lock.json ]; then
+            echo "Found package-lock.json — using npm ci"
+            npm ci --no-audit --no-fund
+          elif [ -f yarn.lock ]; then
+            echo "Found yarn.lock — using yarn install"
+            corepack enable
+            yarn install --frozen-lockfile
+          else
+            echo "No lockfile found — falling back to npm install"
+            npm install --no-audit --no-fund
+          fi
       - run: npm run build
       - run: npx vercel --prod --token=${{ secrets.VERCEL_TOKEN }}
