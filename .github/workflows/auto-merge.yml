@@ -20,6 +20,11 @@ jobs:
         uses: actions/github-script@v7
         with:
           script: |
+            const maxRetries = 30;
+            const retryDelay = 60000; // 60 seconds
+            const timeout = 30 * 60 * 1000; // 30 minutes
+            const startTime = Date.now();
+
             const { data: pr } = await github.rest.pulls.get({
               owner: context.repo.owner,
               repo: context.repo.repo,
@@ -27,17 +32,39 @@ jobs:
             });
             if (!pr) { core.setFailed("No pull request context"); return; }
 
-            const { data: checks } = await github.rest.checks.listForRef({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              ref: pr.head.sha
-            });
+            for (let attempt = 1; attempt <= maxRetries; attempt++) {
+              const { data: checks } = await github.rest.checks.listForRef({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                ref: pr.head.sha
+              });
 
-            const allPassed = checks.check_runs.every(c => c.conclusion === "success" || c.conclusion === "skipped");
-            if (!allPassed) {
-              core.info("⏳ Waiting for all checks to pass...");
-              process.exit(78);
+              const pending = checks.check_runs.filter(c => c.status !== 'completed');
+              const failed = checks.check_runs.filter(c => c.conclusion === 'failure' || c.conclusion === 'cancelled');
+              const allPassed = checks.check_runs.every(c => c.conclusion === "success" || c.conclusion === "skipped");
+
+              core.info(`Attempt ${attempt}/${maxRetries}: Total checks: ${checks.check_runs.length}, Pending: ${pending.length}, Failed: ${failed.length}`);
+              
+              if (allPassed) {
+                core.info("✅ All checks passed!");
+                return;
+              }
+
+              // Check if we've exceeded the timeout
+              if (Date.now() - startTime > timeout) {
+                core.setFailed(`⏱️ Timeout exceeded after ${timeout / 1000 / 60} minutes. Checks still not complete.`);
+                return;
+              }
+
+              // If this is not the last attempt, wait before retrying
+              if (attempt < maxRetries) {
+                core.info(`⏳ Waiting ${retryDelay / 1000} seconds before next check...`);
+                await new Promise(resolve => setTimeout(resolve, retryDelay));
+              }
             }
+
+            // If we've exhausted all retries
+            core.setFailed(`❌ Checks did not pass after ${maxRetries} attempts. Please review the failing checks.`);
 
       - name: Auto merge PR
         uses: pascalgn/automerge-action@v0.15.6
