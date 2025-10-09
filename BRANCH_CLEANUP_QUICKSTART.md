@@ -7,6 +7,10 @@ This guide provides quick commands for cleaning up branches in TroupeCrypto/Trou
 ### Option 1: Automated Cleanup (Recommended)
 
 ```bash
+# Delete the three outdated branches (Priority)
+./scripts/delete-outdated-branches.sh
+
+# Or, for general cleanup:
 # See what would be deleted (dry run)
 ./scripts/cleanup-branches.sh --dry-run
 
