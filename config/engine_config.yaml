@@ -1,0 +1,129 @@
+# Enhanced Self-Healing Evaluation Engine Configuration
+
+# Logging Configuration
+log_level: "INFO"  # DEBUG, INFO, WARNING, ERROR, CRITICAL
+
+# Rate Limiting
+rate_limit_calls: 60  # Maximum API calls per time window
+rate_limit_window: 60  # Time window in seconds
+
+# Retry Configuration
+max_retry_attempts: 3  # Maximum number of retry attempts for fixes
+retry_delay: 5  # Initial delay between retries in seconds (exponential backoff)
+
+# Approval Workflow
+auto_approve: false  # Automatically approve all fixes (use with caution)
+require_approval_patterns:
+  - "PythonVersionConflict"
+  - "DockerfileNotFound"
+  - "DatabaseConnectionTimeout"
+  - "KubernetesDeploymentFailure"
+  - "TerraformError"
+  - "CredentialLeak"
+
+# Rollback Configuration
+rollback_on_failure: true  # Automatically rollback failed fixes
+rollback_timeout: 60  # Timeout for rollback operations in seconds
+
+# Notification Configuration
+notification_enabled: false  # Enable notifications
+notification_channels:
+  slack:
+    enabled: false
+    webhook_url: ""  # Set via environment variable SLACK_WEBHOOK_URL
+    channel: "#ci-alerts"
+  email:
+    enabled: false
+    smtp_server: ""
+    smtp_port: 587
+    from_address: "ci-bot@example.com"
+    to_addresses:
+      - "team@example.com"
+
+# Audit Logging
+audit_log_path: "logs/audit.log"
+audit_retention_days: 90
+
+# Security Configuration
+validate_commands: true  # Validate all shell commands before execution
+allow_dangerous_operations: false  # Allow potentially dangerous operations
+max_command_timeout: 300  # Maximum timeout for command execution in seconds
+
+# GitHub Integration
+github:
+  token_env_var: "GITHUB_TOKEN"
+  api_base_url: "https://api.github.com"
+  max_file_size: 10485760  # 10MB - maximum file size to process
+
+# Repository Configuration
+repositories:
+  # Multi-repository support
+  - name: "TroupeCrypto/TroupeCore"
+    branch: "main"
+    auto_fix_enabled: true
+    max_fixes_per_run: 5
+    cooldown_period: 300  # Seconds between fix attempts
+
+# Fix Categories
+fix_categories:
+  python:
+    enabled: true
+    priority: 1
+  nodejs:
+    enabled: true
+    priority: 1
+  docker:
+    enabled: true
+    priority: 2
+  database:
+    enabled: true
+    priority: 3
+  build_tools:
+    enabled: true
+    priority: 2
+  linting:
+    enabled: true
+    priority: 1
+  testing:
+    enabled: true
+    priority: 2
+  security:
+    enabled: true
+    priority: 0  # Highest priority
+  infrastructure:
+    enabled: false  # Disabled by default for safety
+    priority: 4
+
+# Metrics and Monitoring
+metrics:
+  enabled: true
+  export_path: "logs/metrics.json"
+  export_interval: 3600  # Export metrics every hour
+  prometheus:
+    enabled: false
+    port: 9090
+  grafana:
+    enabled: false
+    dashboard_url: ""
+
+# CI/CD Integration
+ci_integration:
+  workflow_retry_limit: 3
+  cooldown_period: 300  # Seconds between retry attempts
+  notify_on_retry: true
+  create_pr_for_fixes: true  # Create PR instead of direct commit
+  pr_labels:
+    - "automated-fix"
+    - "self-healing"
+  pr_reviewers: []  # Add GitHub usernames for automatic review requests
+
+# Advanced Settings
+advanced:
+  parallel_fixes: false  # Apply multiple fixes in parallel
+  dry_run: false  # Simulate fixes without actually applying them
+  verbose_logging: false
+  save_error_snapshots: true  # Save error logs for analysis
+  error_snapshot_path: "logs/errors"
+  machine_learning:
+    enabled: false  # Use ML for pattern detection (future feature)
+    model_path: "models/error_classifier.pkl"

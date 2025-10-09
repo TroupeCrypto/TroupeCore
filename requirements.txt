@@ -1,11 +1,5 @@
-# Python requirements for TroupeCore
-
-# FastAPI Application
-fastapi>=0.104.0
-
 # Enhanced Self-Healing Evaluation Engine Requirements
 pyyaml>=6.0
 pytest>=7.4.0
 pytest-mock>=3.11.1
 requests>=2.31.0
-

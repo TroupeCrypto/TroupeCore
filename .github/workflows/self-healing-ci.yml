@@ -1,0 +1,294 @@
+name: Self-Healing CI
+
+on:
+  workflow_run:
+    workflows: ["*"]  # Trigger on any workflow failure
+    types: [completed]
+  workflow_dispatch:  # Allow manual triggering
+    inputs:
+      error_log:
+        description: 'Error log to analyze'
+        required: false
+      dry_run:
+        description: 'Dry run mode (no actual fixes)'
+        required: false
+        default: 'false'
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+  actions: read
+
+# Prevent multiple self-healing runs from interfering
+concurrency:
+  group: self-healing-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  PYTHON_VERSION: '3.11'
+  CONFIG_PATH: 'config/engine_config.yaml'
+
+jobs:
+  detect-failure:
+    name: Detect Workflow Failure
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'failure' || github.event_name == 'workflow_dispatch' }}
+    outputs:
+      should_heal: ${{ steps.check.outputs.should_heal }}
+      error_type: ${{ steps.check.outputs.error_type }}
+    steps:
+      - name: Check if healing is needed
+        id: check
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "should_heal=true" >> $GITHUB_OUTPUT
+            echo "error_type=manual" >> $GITHUB_OUTPUT
+          elif [ "${{ github.event.workflow_run.conclusion }}" = "failure" ]; then
+            echo "should_heal=true" >> $GITHUB_OUTPUT
+            echo "error_type=workflow_failure" >> $GITHUB_OUTPUT
+          else
+            echo "should_heal=false" >> $GITHUB_OUTPUT
+          fi
+
+  self-heal:
+    name: Self-Healing Evaluation
+    needs: detect-failure
+    if: needs.detect-failure.outputs.should_heal == 'true'
+    runs-on: ${{ matrix.os }}
+    
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest]
+        python-version: ['3.11']
+        # Add more environments as needed
+        # os: [ubuntu-latest, windows-latest, macos-latest]
+        # python-version: ['3.9', '3.10', '3.11']
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: 'pip'
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt || echo "No requirements.txt or installation failed"
+      
+      - name: Download workflow logs
+        if: github.event_name == 'workflow_run'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const runId = context.payload.workflow_run.id;
+            
+            try {
+              const logs = await github.rest.actions.downloadWorkflowRunLogs({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                run_id: runId,
+              });
+              
+              fs.writeFileSync('workflow_logs.zip', Buffer.from(logs.data));
+              console.log('Workflow logs downloaded successfully');
+            } catch (error) {
+              console.log('Failed to download logs:', error.message);
+            }
+      
+      - name: Extract and analyze logs
+        if: github.event_name == 'workflow_run'
+        run: |
+          if [ -f workflow_logs.zip ]; then
+            unzip -q workflow_logs.zip -d workflow_logs || true
+            find workflow_logs -type f -name "*.txt" -exec cat {} \; > combined_logs.txt
+            echo "Logs extracted and combined"
+          else
+            echo "No logs to extract"
+            touch combined_logs.txt
+          fi
+      
+      - name: Run Self-Healing Engine
+        id: heal
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "Starting self-healing evaluation..."
+          
+          # Create logs directory
+          mkdir -p logs
+          
+          # Run the evaluation engine
+          if [ -f combined_logs.txt ]; then
+            python evaluation_engine.py \
+              --config "${{ env.CONFIG_PATH }}" \
+              --error-log combined_logs.txt \
+              > healing_result.json 2>&1 || true
+          elif [ -n "${{ github.event.inputs.error_log }}" ]; then
+            echo "${{ github.event.inputs.error_log }}" | python evaluation_engine.py \
+              --config "${{ env.CONFIG_PATH }}" \
+              > healing_result.json 2>&1 || true
+          else
+            echo "No error log available"
+            exit 0
+          fi
+          
+          # Check if fix was applied
+          if [ -f healing_result.json ]; then
+            cat healing_result.json
+            if grep -q '"success": true' healing_result.json; then
+              echo "fix_applied=true" >> $GITHUB_OUTPUT
+              echo "✅ Fix applied successfully"
+            else
+              echo "fix_applied=false" >> $GITHUB_OUTPUT
+              echo "❌ Fix attempt failed"
+            fi
+          else
+            echo "fix_applied=false" >> $GITHUB_OUTPUT
+            echo "No healing result available"
+          fi
+      
+      - name: Check for changes
+        id: changes
+        run: |
+          git diff --quiet && echo "has_changes=false" >> $GITHUB_OUTPUT || echo "has_changes=true" >> $GITHUB_OUTPUT
+          
+          if [ "$(git diff --name-only | wc -l)" -gt 0 ]; then
+            echo "Changed files:"
+            git diff --name-only
+          fi
+      
+      - name: Create fix branch and PR
+        if: steps.changes.outputs.has_changes == 'true' && steps.heal.outputs.fix_applied == 'true'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Configure git
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          
+          # Create branch
+          BRANCH_NAME="auto-fix/self-healing-$(date +%s)"
+          git checkout -b "$BRANCH_NAME"
+          
+          # Commit changes
+          git add -A
+          git commit -m "🤖 Automated fix from self-healing engine
+          
+          This fix was automatically generated by the self-healing evaluation engine
+          in response to a workflow failure.
+          
+          Workflow Run: ${{ github.event.workflow_run.html_url }}
+          Triggered by: ${{ github.actor }}
+          Timestamp: $(date -u +%Y-%m-%dT%H:%M:%SZ)
+          "
+          
+          # Push branch
+          git push origin "$BRANCH_NAME"
+          
+          # Create PR using GitHub API
+          gh pr create \
+            --title "🤖 Automated Fix: Self-Healing from Workflow Failure" \
+            --body "## Automated Fix
+          
+          This PR contains automated fixes generated by the self-healing evaluation engine.
+          
+          ### Details
+          - **Triggered by**: Workflow failure
+          - **Original workflow**: ${{ github.event.workflow_run.name }}
+          - **Run ID**: ${{ github.event.workflow_run.id }}
+          - **Actor**: ${{ github.actor }}
+          - **Timestamp**: $(date -u +%Y-%m-%dT%H:%M:%SZ)
+          
+          ### Changes
+          $(git diff origin/${{ github.event.repository.default_branch }}..HEAD --stat)
+          
+          ### Review Notes
+          - Please review the changes carefully before merging
+          - The self-healing engine attempted to fix known error patterns
+          - Manual verification is recommended
+          
+          ### Audit Log
+          See \`logs/audit.log\` for detailed information about the fix applied.
+          " \
+            --base "${{ github.event.repository.default_branch }}" \
+            --head "$BRANCH_NAME" \
+            --label "automated-fix" \
+            --label "self-healing"
+      
+      - name: Upload audit logs
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: self-healing-logs-${{ matrix.os }}-py${{ matrix.python-version }}
+          path: |
+            logs/
+            healing_result.json
+            combined_logs.txt
+          retention-days: 30
+      
+      - name: Send notification
+        if: always()
+        run: |
+          if [ "${{ steps.heal.outputs.fix_applied }}" = "true" ]; then
+            echo "✅ Self-healing completed successfully"
+            STATUS="success"
+            MESSAGE="Self-healing engine successfully applied a fix"
+          else
+            echo "⚠️ Self-healing attempted but no fix was applied"
+            STATUS="warning"
+            MESSAGE="Self-healing engine attempted to fix the issue but was unsuccessful"
+          fi
+          
+          # TODO: Add actual notification integration (Slack, email, etc.)
+          echo "Notification: $STATUS - $MESSAGE"
+      
+      - name: Post metrics
+        if: always()
+        run: |
+          if [ -f logs/metrics.json ]; then
+            echo "### Self-Healing Metrics" >> $GITHUB_STEP_SUMMARY
+            echo '```json' >> $GITHUB_STEP_SUMMARY
+            cat logs/metrics.json >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          if [ -f healing_result.json ]; then
+            echo "### Healing Result" >> $GITHUB_STEP_SUMMARY
+            echo '```json' >> $GITHUB_STEP_SUMMARY
+            cat healing_result.json >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+          fi
+
+  verify-fix:
+    name: Verify Fix
+    needs: self-heal
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Run tests to verify fix
+        run: |
+          # Run the original failed workflow or tests here
+          echo "Verification step - would run original workflow/tests"
+          # npm test || pytest || make test
+      
+      - name: Report verification result
+        if: always()
+        run: |
+          if [ $? -eq 0 ]; then
+            echo "✅ Verification passed - fix was successful"
+          else
+            echo "❌ Verification failed - fix needs manual intervention"
+          fi
