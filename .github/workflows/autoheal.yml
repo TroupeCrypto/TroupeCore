@@ -1,0 +1,38 @@
+# .github/workflows/auto-repair.yml
+name: Auto Repair on Failure
+on:
+  workflow_run:
+    workflows: ["Unified Build & Deploy"]
+    types: [completed]
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    if: ${{ github.event.workflow_run.conclusion == 'failure' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Run repair tasks
+        run: |
+          npm ci || npm install
+          npm audit fix || true
+          npx eslint . --fix || true
+          npx prettier --write . || true
+          npm run build || true
+
+      - name: Commit fixes to new branch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          branch="auto-fix-${{ github.run_id }}"
+          git checkout -b "$branch"
+          git add -A
+          git diff --quiet && echo "No changes detected" || git commit -m "Auto-fix for failed build $branch"
+          git push origin "$branch"
+          echo "Created repair branch: $branch"
