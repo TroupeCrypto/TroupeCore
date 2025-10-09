@@ -13,7 +13,9 @@ This document tracks all branches in the TroupeCrypto/TroupeCore repository that
 | `copilot/generate-random-string` | ✅ Merged → Delete | #3 | Merged but branch not deleted |
 | `copilot/run-task-execution` | ✅ Merged → Delete | #2 | Merged but branch not deleted |
 | `revert-3-copilot/generate-random-string` | ✅ Merged → Delete | #5 | Merged but branch not deleted |
-| `copilot/merge-and-delete-extra-branches` | 🔄 Current | #13 | This cleanup branch |
+| `copilot/merge-and-delete-extra-branches` | ✅ Merged → Delete | #13 | Previous cleanup branch, merged Oct 9 |
+| `copilot/enhance-evaluation-engine` | 🔄 Open | #14 | Draft PR - evaluation engine improvements |
+| `copilot/merge-and-cleanup-branches` | 🔄 Current | #15 | This cleanup branch |
 
 ## Detailed Branch Analysis
 
@@ -77,15 +79,24 @@ All the following branches have been merged to main and should be deleted:
 3. `copilot/generate-random-string` (PR #3 - merged)
 4. `copilot/run-task-execution` (PR #2 - merged)
 5. `revert-3-copilot/generate-random-string` (PR #5 - merged)
+6. `copilot/merge-and-delete-extra-branches` (PR #13 - merged)
 
 ### ✅ Phase 2: Delete Closed PR Branches
 The following branches were closed without merging and should be deleted:
 1. `copilot/add-github-actions-workflows-2` (PR #10 - closed)
 2. `copilot/add-github-actions-workflows-3` (PR #11 - closed)
 
-### Phase 3: Final Cleanup
-1. Merge this PR #13 (`copilot/merge-and-delete-extra-branches`)
-2. Delete `copilot/merge-and-delete-extra-branches` branch after merge
+### Phase 3: Execute Cleanup
+Use one of the following methods to delete the 8 branches:
+1. **Automated**: Run `./scripts/delete-merged-branches.sh`
+2. **Manual**: Use the git commands in the "Deletion Commands" section below
+3. **GitHub UI**: Delete via https://github.com/TroupeCrypto/TroupeCore/branches
+
+### Phase 4: Final Cleanup (After Phase 3)
+1. Merge PR #15 (`copilot/merge-and-cleanup-branches`)
+2. Delete `copilot/merge-and-cleanup-branches` branch after merge
+3. Review and resolve PR #14 (`copilot/enhance-evaluation-engine`)
+4. Final state: Repository will have only `main` branch (plus any new feature branches)
 
 ## Technical Notes
 
@@ -101,18 +112,27 @@ These workflows are now part of the main branch and were preserved by deleting t
 
 ### Deletion Commands (For Repository Maintainers)
 
-After manual verification, branches can be deleted using:
+**Option 1: Use the automated script (Recommended)**
 
 ```bash
-# Delete remote branches (requires push access)
-git push origin --delete copilot/add-github-actions-workflows
-git push origin --delete copilot/auto-merge-pull-requests
-git push origin --delete copilot/merge-all-branches-to-main
+# Run the comprehensive deletion script
+./scripts/delete-merged-branches.sh
+```
 
-# Already deleted:
-# git push origin --delete copilot/generate-random-string
-# git push origin --delete copilot/run-task-execution
-# git push origin --delete revert-3-copilot/generate-random-string
+**Option 2: Manual deletion via Git**
+
+```bash
+# Delete merged branches (6 total)
+git push origin --delete copilot/add-github-actions-workflows
+git push origin --delete copilot/delete-unused-copilot-branches
+git push origin --delete copilot/generate-random-string
+git push origin --delete copilot/run-task-execution
+git push origin --delete revert-3-copilot/generate-random-string
+git push origin --delete copilot/merge-and-delete-extra-branches
+
+# Delete closed branches (2 total)
+git push origin --delete copilot/add-github-actions-workflows-2
+git push origin --delete copilot/add-github-actions-workflows-3
 ```
 
 Or use the GitHub UI:
@@ -129,16 +149,21 @@ Before deleting any branch, verify:
 
 ## Summary
 
-- **Total Branches:** 9 (including main)
-- **Already Merged (needs deletion):** 5 branches
+- **Total Branches:** 11 (including main)
+- **Already Merged (needs deletion):** 6 branches
   - `copilot/add-github-actions-workflows` (PR #4)
   - `copilot/delete-unused-copilot-branches` (PR #8)
   - `copilot/generate-random-string` (PR #3)
   - `copilot/run-task-execution` (PR #2)
   - `revert-3-copilot/generate-random-string` (PR #5)
+  - `copilot/merge-and-delete-extra-branches` (PR #13)
 - **Closed without merge (needs deletion):** 2 branches
   - `copilot/add-github-actions-workflows-2` (PR #10)
   - `copilot/add-github-actions-workflows-3` (PR #11)
-- **Current Cleanup Branch:** 1 (`copilot/merge-and-delete-extra-branches`, PR #13)
+- **Open PRs (keep for now):** 2 branches
+  - `copilot/enhance-evaluation-engine` (PR #14 - draft)
+  - `copilot/merge-and-cleanup-branches` (PR #15 - current cleanup)
 
-After completing cleanup, the repository will have a clean branch structure with only the `main` branch remaining.
+**Total branches to delete:** 8 (6 merged + 2 closed)
+
+After completing cleanup, the repository will have 3 branches: `main`, and the 2 open PR branches.
