@@ -7,10 +7,10 @@ This guide provides quick commands for cleaning up branches in TroupeCrypto/Trou
 ### Option 1: Automated Cleanup (Recommended)
 
 ```bash
-# Delete the three outdated branches (Priority)
-./scripts/delete-outdated-branches.sh
+# Delete all extra branches in one command
+./scripts/delete-all-extra-branches.sh
 
-# Or, for general cleanup:
+# Or use the general cleanup script:
 # See what would be deleted (dry run)
 ./scripts/cleanup-branches.sh --dry-run
 
@@ -30,27 +30,37 @@ Click the 🗑️ icon next to each branch to delete.
 ### Option 3: Manual Git Commands
 
 ```bash
-# Delete already merged branches
+# Delete merged branches
 git push origin --delete copilot/add-github-actions-workflows
+git push origin --delete copilot/delete-unused-copilot-branches
+git push origin --delete copilot/generate-random-string
+git push origin --delete copilot/run-task-execution
+git push origin --delete revert-3-copilot/generate-random-string
 
-# Delete branches with merged PRs (after their PRs are merged)
-git push origin --delete copilot/auto-merge-pull-requests
-git push origin --delete copilot/merge-all-branches-to-main
+# Delete closed (not merged) branches
+git push origin --delete copilot/add-github-actions-workflows-2
+git push origin --delete copilot/add-github-actions-workflows-3
 
-# Already deleted (outdated branches):
-# git push origin --delete copilot/generate-random-string
-# git push origin --delete copilot/run-task-execution
-# git push origin --delete revert-3-copilot/generate-random-string
+# After merging PR #13, delete the tracking branch
+git push origin --delete copilot/merge-and-delete-extra-branches
 ```
 
 ## ⚠️ Important
 
-The following branches have been deleted (they contained outdated changes):
-- ✅ `copilot/generate-random-string` - Deleted
-- ✅ `copilot/run-task-execution` - Deleted
-- ✅ `revert-3-copilot/generate-random-string` - Deleted
+The following branches need to be deleted:
 
-They were deleted directly without merging as they contained outdated changes that conflicted with current main.
+**Merged branches (5):**
+- `copilot/add-github-actions-workflows` (PR #4)
+- `copilot/delete-unused-copilot-branches` (PR #8)
+- `copilot/generate-random-string` (PR #3)
+- `copilot/run-task-execution` (PR #2)
+- `revert-3-copilot/generate-random-string` (PR #5)
+
+**Closed branches (2):**
+- `copilot/add-github-actions-workflows-2` (PR #10)
+- `copilot/add-github-actions-workflows-3` (PR #11)
+
+All of these branches should be deleted from the remote repository.
 
 ## 📚 Full Documentation
 
@@ -63,4 +73,4 @@ For detailed information, see:
 After cleanup, verify at:
 https://github.com/TroupeCrypto/TroupeCore/branches
 
-Expected result: Only `main` branch should remain.
+Expected result: Only `main` and `copilot/merge-and-delete-extra-branches` should remain until PR #13 is merged, then only `main` branch should remain.

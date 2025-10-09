@@ -59,15 +59,19 @@ git fetch --all --prune
 # Already merged branches
 MERGED_BRANCHES=(
   "copilot/add-github-actions-workflows"
+  "copilot/delete-unused-copilot-branches"
+  "copilot/generate-random-string"
+  "copilot/run-task-execution"
+  "revert-3-copilot/generate-random-string"
 )
 
-# Outdated branches that should NOT be merged
-# These have been deleted:
-# OUTDATED_BRANCHES=(
-#   "copilot/generate-random-string"
-#   "copilot/run-task-execution"
-#   "revert-3-copilot/generate-random-string"
-# )
+# Closed without merge branches
+CLOSED_BRANCHES=(
+  "copilot/add-github-actions-workflows-2"
+  "copilot/add-github-actions-workflows-3"
+)
+
+# Combined list for deletion
 OUTDATED_BRANCHES=()
 
 # Branches pending merge (will be deleted after their PRs are merged)
@@ -112,6 +116,18 @@ if [ ${#MERGED_BRANCHES[@]} -gt 0 ]; then
   echo -e "${GREEN}========================================${NC}"
   for branch in "${MERGED_BRANCHES[@]}"; do
     delete_branch "$branch" "Already merged to main via PR"
+  done
+  echo ""
+fi
+
+# Delete closed (not merged) branches
+if [ ${#CLOSED_BRANCHES[@]} -gt 0 ]; then
+  echo -e "${YELLOW}========================================${NC}"
+  echo -e "${YELLOW}Closed PR Branches (Not Merged)${NC}"
+  echo -e "${YELLOW}========================================${NC}"
+  echo -e "${YELLOW}These branches were closed without merging${NC}"
+  for branch in "${CLOSED_BRANCHES[@]}"; do
+    delete_branch "$branch" "Closed without merge"
   done
   echo ""
 fi
