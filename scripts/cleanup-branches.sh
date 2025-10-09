@@ -62,11 +62,13 @@ MERGED_BRANCHES=(
 )
 
 # Outdated branches that should NOT be merged
-OUTDATED_BRANCHES=(
-  "copilot/generate-random-string"
-  "copilot/run-task-execution"
-  "revert-3-copilot/generate-random-string"
-)
+# These have been deleted:
+# OUTDATED_BRANCHES=(
+#   "copilot/generate-random-string"
+#   "copilot/run-task-execution"
+#   "revert-3-copilot/generate-random-string"
+# )
+OUTDATED_BRANCHES=()
 
 # Branches pending merge (will be deleted after their PRs are merged)
 PENDING_MERGE=(

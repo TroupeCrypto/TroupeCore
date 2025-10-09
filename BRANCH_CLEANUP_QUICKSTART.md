@@ -7,6 +7,10 @@ This guide provides quick commands for cleaning up branches in TroupeCrypto/Trou
 ### Option 1: Automated Cleanup (Recommended)
 
 ```bash
+# Delete the three outdated branches (Priority)
+./scripts/delete-outdated-branches.sh
+
+# Or, for general cleanup:
 # See what would be deleted (dry run)
 ./scripts/cleanup-branches.sh --dry-run
 
@@ -29,24 +33,24 @@ Click the 🗑️ icon next to each branch to delete.
 # Delete already merged branches
 git push origin --delete copilot/add-github-actions-workflows
 
-# Delete outdated branches (DO NOT MERGE THESE)
-git push origin --delete copilot/generate-random-string
-git push origin --delete copilot/run-task-execution
-git push origin --delete revert-3-copilot/generate-random-string
-
 # Delete branches with merged PRs (after their PRs are merged)
 git push origin --delete copilot/auto-merge-pull-requests
 git push origin --delete copilot/merge-all-branches-to-main
+
+# Already deleted (outdated branches):
+# git push origin --delete copilot/generate-random-string
+# git push origin --delete copilot/run-task-execution
+# git push origin --delete revert-3-copilot/generate-random-string
 ```
 
 ## ⚠️ Important
 
-**DO NOT MERGE** these branches (delete them directly):
-- `copilot/generate-random-string`
-- `copilot/run-task-execution` 
-- `revert-3-copilot/generate-random-string`
+The following branches have been deleted (they contained outdated changes):
+- ✅ `copilot/generate-random-string` - Deleted
+- ✅ `copilot/run-task-execution` - Deleted
+- ✅ `revert-3-copilot/generate-random-string` - Deleted
 
-They contain outdated changes that conflict with current main.
+They were deleted directly without merging as they contained outdated changes that conflicted with current main.
 
 ## 📚 Full Documentation
 
