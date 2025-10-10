@@ -2,3 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 body { @apply bg-black text-white; }
+
+/* Recharts tooltip fix for dark background */
+.recharts-default-tooltip { color: #e4e4e7; }
