@@ -1,7 +1,10 @@
+import DashboardLayout from '@/components/layout/DashboardLayout'
+import MainDashboard from '@/components/dashboard/MainDashboard'
+
 export default function Home() {
   return (
-    <main className="flex min-h-screen items-center justify-center">
-      <h1 className="text-4xl font-bold">Troupe Inc — Live</h1>
-    </main>
-  );
+    <DashboardLayout>
+      <MainDashboard />
+    </DashboardLayout>
+  )
 }

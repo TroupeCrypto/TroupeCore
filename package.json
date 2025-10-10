@@ -1,5 +1,5 @@
 {
-  "name": "troupe-inc-site",
+  "name": "advanced-analytics-dashboard",
   "version": "1.0.0",
   "private": true,
   "scripts": {
@@ -14,6 +14,30 @@
     "react-dom": "18.3.1",
     "tailwindcss": "3.4.1",
     "autoprefixer": "10.4.19",
-    "postcss": "8.4.35"
+    "postcss": "8.4.35",
+    "@headlessui/react": "^1.7.17",
+    "@heroicons/react": "^2.0.18",
+    "@tanstack/react-query": "^5.8.4",
+    "@tanstack/react-table": "^8.10.7",
+    "recharts": "^2.8.0",
+    "d3": "^7.8.5",
+    "framer-motion": "^10.16.4",
+    "lucide-react": "^0.294.0",
+    "react-hook-form": "^7.47.0",
+    "react-hot-toast": "^2.4.1",
+    "react-resizable-panels": "^0.0.55",
+    "react-grid-layout": "^1.4.4",
+    "zustand": "^4.4.6",
+    "clsx": "^2.0.0",
+    "class-variance-authority": "^0.7.0",
+    "date-fns": "^2.30.0",
+    "axios": "^1.6.0",
+    "socket.io-client": "^4.7.2",
+    "@prisma/client": "^5.6.0",
+    "prisma": "^5.6.0"
+  },
+  "devDependencies": {
+    "eslint": "^8.53.0",
+    "eslint-config-next": "14.2.3"
   }
 }
