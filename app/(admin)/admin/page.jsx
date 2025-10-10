@@ -1,6 +1,7 @@
 import dynamic from "next/dynamic";
 const DashboardGrid = dynamic(() => import("../../../components/dashboard/DashboardGrid"), { ssr: false });
 const DataInspector = dynamic(() => import("../../../components/dashboard/DataInspector"), { ssr: false });
+const AddWidgetModal = dynamic(() => import("../../../components/dashboard/AddWidgetModal"), { ssr: false });
 
 export const metadata = { title: "Admin Dashboard" };
 
@@ -14,6 +15,7 @@ export default function AdminPage() {
         </div>
       </div>
       <DashboardGrid />
+      <AddWidgetModal />
       <DataInspector />
     </div>
   );
