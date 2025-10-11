@@ -1,0 +1,59 @@
+name: Auto-merge PR #28 (test-merge)
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  attempt-merge:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Fetch PR branch
+        run: |
+          git fetch origin cursor/build-advanced-interactive-analytics-dashboard-4ac9:cursor-4ac9
+
+      - name: Create test merge branch
+        run: |
+          git checkout -b try-merge-pr-28 main
+
+      - name: Attempt best-effort merge (prefer PR changes)
+        run: |
+          set -e
+          git merge --no-ff -m "Merge cursor/build-advanced-interactive-analytics-dashboard-4ac9 into main (test-merge)" -X theirs cursor-4ac9 || echo "merge-failed"
+
+      - name: Resolve trivial conflicts (if any) by preferring incoming
+        run: |
+          # If merge left conflict markers, accept theirs for conflicted files
+          if git ls-files -u | grep -q '^'; then
+            git ls-files -u | awk '{print $4}' | sort -u | while read -r file; do
+              git checkout --theirs -- "$file" || true
+              git add "$file" || true
+            done
+            git commit -m "Auto-resolve conflicts preferring incoming PR changes" || true
+          fi || true
+
+      - name: Push test-merge branch
+        run: |
+          git push --force origin try-merge-pr-28
+
+      - name: Create PR for test-merge (try-merge-pr-28 -> main)
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh pr create --base main --head try-merge-pr-28 --title "Test merge PR #28 (auto-resolved conflicts)" --body "Automated test-merge of PR #28 preferring PR changes. CI must pass before merging."
+
+      - name: Enable auto-merge on the new PR (if available)
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Attempt to enable auto-merge via cli/api; if not allowed, leave for manual merge
+          gh pr merge --auto --merge --subject "Merge try-merge-pr-28 into main" || echo "auto-merge not enabled"
