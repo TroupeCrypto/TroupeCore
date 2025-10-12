@@ -13,13 +13,6 @@ const ResponsiveGridLayout = WidthProvider(Responsive);
 
 const defaultLayouts = { lg: [] };
 
-function DynamicWidget({ widgetId }) {
-  const def = widgetRegistry[widgetId];
-  if (!def) return null;
-  const Comp = dynamic(def.component);
-  return <Comp />;
-}
-
 export default function DashboardGrid() {
   const router = useRouter();
   const { layouts, setLayouts, widgets } = useDashboardStore();
