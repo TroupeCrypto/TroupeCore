@@ -1,4 +1,5 @@
 import "../styles/globals.css";
+import "../lib/utils/safe-console";
 import ThemeProviderClient from "../components/layout/ThemeProvider";
 
 export const metadata = { title: "Troupe Inc", description: "Welcome" };
