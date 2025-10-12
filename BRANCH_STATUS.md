@@ -111,6 +111,20 @@ Main branch (`89655fb59eafb1ac040ea8a0ddc271fa3ed82a9c`) includes:
 
 For repository maintainers with push access:
 
+### Option 1: Use the automated script (Recommended)
+
+```bash
+./scripts/delete-merged-branches.sh
+```
+
+This script will:
+- List all branches to be deleted
+- Ask for confirmation
+- Delete all 11 outdated branches
+- Provide next steps
+
+### Option 2: Manual deletion commands
+
 ```bash
 # Delete branches with work already merged
 git push origin --delete comprehensive-vault-dashboard
@@ -129,7 +143,11 @@ git push origin --delete copilot/remove-placeholder-data-dashboard
 git push origin --delete copilot/merge-all-branches
 ```
 
-Or use the GitHub UI at: https://github.com/TroupeCrypto/TroupeCore/branches
+### Option 3: GitHub UI
+
+Visit: https://github.com/TroupeCrypto/TroupeCore/branches
+
+Click the delete icon (🗑️) next to each branch listed above.
 
 ---
 
