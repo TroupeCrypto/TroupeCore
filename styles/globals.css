@@ -5,3 +5,8 @@ body { @apply bg-black text-white; }
 
 /* Recharts tooltip fix for dark background */
 .recharts-default-tooltip { color: #e4e4e7; }
+
+/* Base typography */
+h1, h2, h3, h4 { @apply tracking-tight; }
+a { @apply text-indigo-400 hover:text-indigo-300; }
+input, select { @apply rounded-md; }

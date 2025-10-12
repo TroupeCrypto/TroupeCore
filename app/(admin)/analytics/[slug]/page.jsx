@@ -3,6 +3,8 @@
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useMemo, useState } from "react";
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, BarChart, Bar, Tooltip, AreaChart, Area } from "recharts";
+import useSWR from "swr";
+const fetcher = (url) => fetch(url).then((r) => r.json());
 import { DateRangePicker } from "./range";
 
 const data = Array.from({ length: 30 }).map((_, i) => ({
@@ -16,6 +18,7 @@ export default function AnalyticsDetail() {
   const router = useRouter();
   const search = useSearchParams();
   const [stacked, setStacked] = useState(true);
+  const { data: analytics } = useSWR("/api/analytics", fetcher);
 
   const title = useMemo(() => {
     return String(slug).replace(/-/g, " ").replace(/\b\w/g, (m) => m.toUpperCase());
@@ -98,6 +101,10 @@ export default function AnalyticsDetail() {
           <button className="rounded-md border border-zinc-800 bg-zinc-900 px-3 py-2 text-sm hover:bg-zinc-800">
             Run
           </button>
+        </div>
+        <div className="mt-4 grid grid-cols-2 gap-3 text-xs text-zinc-500">
+          <div>Live metrics:</div>
+          <pre className="col-span-2 overflow-auto rounded-md border border-zinc-800 bg-zinc-900 p-3">{JSON.stringify(analytics?.metrics, null, 2)}</pre>
         </div>
       </div>
     </div>
