@@ -41,9 +41,19 @@ export default function Sidebar() {
           );
         })}
       </nav>
-      <div className="border-t border-sidebar-border p-4 text-xs text-zinc-500">
-        <div className="font-semibold text-[#00ff41]">Session secure</div>
-        <div>Biometric lock · PostgreSQL encrypted</div>
+      <div className="space-y-3 border-t border-sidebar-border p-4 text-xs text-zinc-500">
+        <div>
+          <div className="font-semibold text-[#00ff41]">Session secure</div>
+          <div>Biometric lock · PostgreSQL encrypted</div>
+        </div>
+        <form action="/api/auth/logout" method="POST">
+          <button
+            type="submit"
+            className="w-full rounded-md border border-zinc-700 bg-zinc-900/40 px-2 py-1.5 text-zinc-300 transition hover:border-red-500/50 hover:bg-red-500/10 hover:text-red-200"
+          >
+            Sign out
+          </button>
+        </form>
       </div>
     </aside>
   );
