@@ -13,7 +13,7 @@ import {
 } from "../../../../../lib/auth/session";
 import { getOAuthProvider } from "../../../../../lib/auth/config";
 
-function unauthorizedResponse(requestUrl) {
+function oauthErrorResponse(requestUrl) {
   return NextResponse.redirect(new URL("/login?error=oauth_failed", requestUrl));
 }
 
@@ -65,7 +65,7 @@ export async function GET(request, { params }) {
     response.headers.append("Set-Cookie", clearNextCookieHeader());
     return response;
   } catch {
-    const response = unauthorizedResponse(url);
+    const response = oauthErrorResponse(url);
     response.headers.append("Set-Cookie", clearStateCookieHeader());
     response.headers.append("Set-Cookie", clearNextCookieHeader());
     return response;
